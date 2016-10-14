@@ -4,61 +4,22 @@ import json
 
 app = Flask(__name__)
 
-# General Welcome
+# =================================================
+# Welcome
+# =================================================
 @app.route("/")
 def welcome():
-	result_string = "Hey! You can check out /hello/<name>."
-	return(result_string)
-
-# Name
-@app.route('/hello/<name>')
-def hello(name):
-	welcome = 'Hello, ' + str(name) + '!'
-	br = '<br>'
-	name = 'Your name has ' + str(len(name)) + ' characters in it.'
-	result_string = welcome + br + name
-	return(result_string)
-
-# Fizzbuzz
-@app.route('/fizzbuzz/<num>')
-def fizzbuzz(num):
-
-	dictionary = {}
-	num_fizz = 0
-	num_buzz = 0
-	num_fizz_buzz = 0
-	num_non = 0
-
-	result_string = ""
-	for i in range(1, int(num)+1):
-		if i%3 == 0 and i%5 == 0:
-			result_string += "fizzbuzz "
-			num_fizz_buzz += 1
-		elif i%3 == 0:
-			result_string += "fizz "
-			num_fizz += 1
-		elif i%5 == 0:
-			result_string += "buzz "
-			num_buzz += 1
-		else:
-			result_string += str(str(i) + " ")
-			num_non += 1
-
-	dictionary["code"] = 200
-	dictionary["number"] = num
-	dictionary["string"] = result_string
-	dictionary["num_of_fizz"] = num_fizz
-	dictionary["num_of_buzz"] = num_buzz
-	dictionary["num_of_fizzbuzz"] = num_fizz_buzz
-	dictionary["num_of_non"] = num_non
-
-	result = json.dumps(dictionary)
-	return(result)
+	response_dict = {}
+	response_dict["response"] = "Welcome to the petstore!"
+	return(json.dumps(response_dict))
 
 
 # =================================================
 # Pets
 # =================================================
+
+# Pet List
+pet_list = []
 
 # Class Pet
 class Pet:
@@ -79,60 +40,97 @@ class Pet:
 		pet_str = json.dumps(pet_dict)
 		return(pet_str)
 
-# # Turn Multiple Pets Into JSON String
-# def pets_to_str(pets):
-# 	pets_dict = []
-# 	for pet in pets:
-# 		p_dict = pet.to_dict()
-# 		p_str = str(p_dict)
-# 		pets_dict.append(p_str)
-# 	result_string = "["
-# 	result_string += ','.join(pets_dict)
-# 	result_string += "]"
-# 	return(result_string)
-
-# Pet List
-pet_list = []
-
 # PETS
 @app.route('/pets/', methods=['GET'])
 def pets():
-	return_list = [pet.to_str() for pet in pet_list]
-	print(return_list)
-	print(type(return_list))
-	return(','.join(return_list))
+	response_dict = {}
+	pet_str_list = [pet.to_dict() for pet in pet_list]
+	response_dict["response"] = pet_str_list
+	return(json.dumps(response_dict))
 
 # ADD PET
 @app.route('/pets/', methods=['POST'])
 def addPet():
-
-	
-
+	response_dict = {}
 	args = request.args
+
 	if all(arg in args for arg in ['name', 'age', 'species']):
-		pet = Pet(args.get('name'), args.get('age'), args.get('species'))
+
+		pet_name = args.get('name')
+		pet_age = args.get('age')
+		pet_species = args.get('species')
+
+		for pet in pet_list:
+			if pet_name == pet.name:
+				response_dict["response"] = "Unsuccessful. There is already a pet with that name.."
+				return(json.dumps(response_dict), 409)
+
+		pet = Pet(pet_name, pet_age, pet_species)
 		pet_list.append(pet)
-		return("Succesfully added.")
-	return("Unsuccessful. Please have parameters 'name', 'age', and 'species' set.")
+		response_dict["response"] = "Succesful. Added pet."
+		return(json.dumps(response_dict))
+
+	response_dict["response"] = "Unsuccessful. Please have parameters 'name', 'age', and 'species' set."
+	return(json.dumps(response_dict), 400)
 
 # GET PET
 @app.route('/pets/<name>', methods=['GET'])
 def getPet(name):
+	response_dict = {}
 	name = str(name)
 
-	matching_pets = []
 	for pet in pet_list:
 		if pet.name == name:
-			matching_pets.append(pet)
+			response_dict["response"] = pet.to_dict()
+			return(json.dumps(response_dict))
 
-	if len(matching_pets) > 0:
-		return_list = [pet.to_str() for pet in pet_list]
-		print(return_list)
-		print(type(return_list))
-		return(','.join(return_list))
+	response_dict["response"] = "Unsuccessful. No matching pets by that name."
+	return(json.dumps(response_dict), 400)
+
+# UPDATE PET
+@app.route('/pets/<name>', methods=['PUT'])
+def updatePet(name):
+	response_dict = {}
+	args = request.args
+	name = str(name)
+
+	if all(arg in args for arg in ['name', 'age', 'species']):
+		pet_name = args.get('name')
+		pet_age = args.get('age')
+		pet_species = args.get('species')
+
+		for pet in pet_list:
+			if pet.name == name:
+				pet.name = pet_name
+				pet.age = pet_age
+				pet.species = pet_species
+
+				response_dict["response"] = "Succesful. Updated pet."
+				return(json.dumps(response_dict))
+
+		response_dict["response"] = "Unsuccessful. There is no pet with that name."
+		return(json.dumps(response_dict), 404)
 
 	else:
-		return("No matching pets by the name '" + name + "'")
+		response_dict["response"] = "Unsuccessful. Please have parameters 'name', 'age', and 'species' set."
+		return(json.dumps(response_dict), 400)
+
+# DELETE PET
+@app.route('/pets/<name>', methods=['DELETE'])
+def deletePet(name):
+	response_dict = {}
+	name = str(name)
+
+	for i in range(0, len(pet_list)):
+		if pet_list[i].name == name:
+			pet_list.remove(pet_list[i])
+
+			response_dict["response"] = "Succesful. Removed pet."
+			return(json.dumps(response_dict))
+
+	response_dict["response"] = "Unsuccessful. There is no pet with that name."
+	return(json.dumps(response_dict), 404)
+
 
 if __name__ == "__main__":
     app.run()
