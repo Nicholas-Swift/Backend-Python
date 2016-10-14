@@ -74,17 +74,22 @@ class Pet:
 		pet_dict['species'] = str(self.species)
 		return pet_dict
 
-# Turn Multiple Pets Into JSON String
-def pets_to_str(pets):
-	pets_dict = []
-	for pet in pets:
-		p_dict = pet.to_dict()
-		p_str = str(p_dict)
-		pets_dict.append(p_str)
-	result_string = "["
-	result_string += ','.join(pets_dict)
-	result_string += "]"
-	return(result_string)
+	def to_str(self):
+		pet_dict = self.to_dict()
+		pet_str = json.dumps(pet_dict)
+		return(pet_str)
+
+# # Turn Multiple Pets Into JSON String
+# def pets_to_str(pets):
+# 	pets_dict = []
+# 	for pet in pets:
+# 		p_dict = pet.to_dict()
+# 		p_str = str(p_dict)
+# 		pets_dict.append(p_str)
+# 	result_string = "["
+# 	result_string += ','.join(pets_dict)
+# 	result_string += "]"
+# 	return(result_string)
 
 # Pet List
 pet_list = []
@@ -92,11 +97,17 @@ pet_list = []
 # PETS
 @app.route('/pets/', methods=['GET'])
 def pets():
-	return(pets_to_str(pet_list))
+	return_list = [pet.to_str() for pet in pet_list]
+	print(return_list)
+	print(type(return_list))
+	return(','.join(return_list))
 
 # ADD PET
 @app.route('/pets/', methods=['POST'])
 def addPet():
+
+	
+
 	args = request.args
 	if all(arg in args for arg in ['name', 'age', 'species']):
 		pet = Pet(args.get('name'), args.get('age'), args.get('species'))
@@ -115,7 +126,10 @@ def getPet(name):
 			matching_pets.append(pet)
 
 	if len(matching_pets) > 0:
-		return(pets_to_str(matching_pets))
+		return_list = [pet.to_str() for pet in pet_list]
+		print(return_list)
+		print(type(return_list))
+		return(','.join(return_list))
 
 	else:
 		return("No matching pets by the name '" + name + "'")
