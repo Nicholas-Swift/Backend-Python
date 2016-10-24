@@ -1,0 +1,5 @@
+{
+  "test_main.py::FlaskServerTest::test_hello": true,
+  "test_main.py::FlaskServerTest::test_pet_search_by_name": true,
+  "test_main.py::FlaskServerTest::test_pets_get_route": true
+}

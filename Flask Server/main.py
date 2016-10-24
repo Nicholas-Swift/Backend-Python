@@ -13,6 +13,9 @@ def welcome():
 	response_dict["response"] = "Welcome to the petstore!"
 	return(json.dumps(response_dict))
 
+@app.route("/hello")
+def hello():
+	return("Hello World!")
 
 # =================================================
 # Pets
@@ -41,6 +44,7 @@ class Pet:
 		return(pet_str)
 
 # PETS
+@app.route('/pets', methods=['GET'])
 @app.route('/pets/', methods=['GET'])
 def pets():
 	response_dict = {}
@@ -48,9 +52,10 @@ def pets():
 	response_dict["response"] = pet_str_list
 	return(json.dumps(response_dict))
 
-# ADD PET
+# CREATE PET
+@app.route('/pets', methods=['POST'])
 @app.route('/pets/', methods=['POST'])
-def addPet():
+def createPet():
 	response_dict = {}
 	args = request.args
 
@@ -62,20 +67,20 @@ def addPet():
 
 		for pet in pet_list:
 			if pet_name == pet.name:
-				response_dict["response"] = "Unsuccessful. There is already a pet with that name.."
+				response_dict["response"] = "Unsuccessful. There is already a pet with that name."
 				return(json.dumps(response_dict), 409)
 
 		pet = Pet(pet_name, pet_age, pet_species)
 		pet_list.append(pet)
-		response_dict["response"] = "Succesful. Added pet."
+		response_dict["response"] = pet.to_dict()
 		return(json.dumps(response_dict))
 
 	response_dict["response"] = "Unsuccessful. Please have parameters 'name', 'age', and 'species' set."
 	return(json.dumps(response_dict), 400)
 
-# GET PET
+# SHOW PET
 @app.route('/pets/<name>', methods=['GET'])
-def getPet(name):
+def showPet(name):
 	response_dict = {}
 	name = str(name)
 
@@ -105,10 +110,10 @@ def updatePet(name):
 				pet.age = pet_age
 				pet.species = pet_species
 
-				response_dict["response"] = "Succesful. Updated pet."
+				response_dict["response"] = pet.to_dict()
 				return(json.dumps(response_dict))
 
-		response_dict["response"] = "Unsuccessful. There is no pet with that name."
+		response_dict["response"] = "Unsuccessful. No matching pets by that name."
 		return(json.dumps(response_dict), 404)
 
 	else:
@@ -128,7 +133,7 @@ def deletePet(name):
 			response_dict["response"] = "Succesful. Removed pet."
 			return(json.dumps(response_dict))
 
-	response_dict["response"] = "Unsuccessful. There is no pet with that name."
+	response_dict["response"] = "Unsuccessful. No matching pets by that name."
 	return(json.dumps(response_dict), 404)
 
 
